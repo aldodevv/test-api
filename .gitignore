@@ -1,5 +1,5 @@
 # .env file berisi secret tidak boleh masuk github
-advanded/.env
+advanced/.env
 
 # Binary hasil build (abaikan kalau kamu cross-compile untuk server Linux)
 advanced
