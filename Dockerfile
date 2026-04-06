@@ -1,33 +1,32 @@
-# --- Stage 1: Build tahap pertama ---
-FROM golang:1.21-alpine AS builder
+# --- Stage 1: Build ---
+FROM golang:1.26-alpine AS builder
 
-# Set working directory di dalam container
-WORKDIR /app
+WORKDIR /build
 
-# Copy go.mod & go.sum (Karena projectmu di folder test-api, sesuaikan path jika di-build dari root)
-# Tetapi asumsinya kita pindahkan struktur 'advanced' menjadi independent.
+# Copy go.mod and go.sum
 COPY go.mod go.sum ./
+
+# Download dependencies
 RUN go mod download
 
-# Copy source code ke container
+# Copy entire project
 COPY . .
 
-# Build binary di CGO_ENABLED=0 agar fully static (kecuali jika tetap pakai SQLite yang butuh CGO)
-# Jika kamu mengubah config DB ke PostgreSQL nanti, gunakan CGO_ENABLED=0
-RUN go build -o advanced_api main.go
+# Build binary
+RUN CGO_ENABLED=0 GOOS=linux go build -o advanced_api ./advanced/main.go
 
 
-# --- Stage 2: Minimalis Container ---
+# --- Stage 2: Runtime ---
 FROM alpine:latest
 
-WORKDIR /root/
+WORKDIR /app
 
-# Pindahkan hasil build aplikasi dari tahap Builder
-COPY --from=builder /app/advanced_api .
-COPY --from=builder /app/.env .
+# Install ca-certificates for HTTPS
+RUN apk add --no-cache ca-certificates
 
-# Buka Port
+# Copy binary from builder
+COPY --from=builder /build/advanced_api .
+
 EXPOSE 8082
 
-# Jalankan perintah
 CMD ["./advanced_api"]

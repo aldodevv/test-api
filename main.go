@@ -19,12 +19,8 @@ func main() {
 		log.Println("Peringatan: File .env tidak ditemukan, menggunakan variabel OS default")
 	}
 
-	// 2. Setup Koneksi Database
-	dbName := os.Getenv("DB_NAME")
-	if dbName == "" {
-		dbName = "test.db" // default jika .env kosong
-	}
-	config.ConnectDatabase(dbName)
+	// 2. Setup Koneksi Database (Konfigurasi URL ada di dalam ConnectDatabase)
+	config.ConnectDatabase()
 
 	// AutoMigrate: GORM akan otomatis membuat tabel di database 
 	// yang mensinkronisasi field-field pada Model User secara otomatis.
