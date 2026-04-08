@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"test-api/index/advanced/constants"
-	"test-api/index/advanced/structs"
+	"advanced/constants"
+	"advanced/structs"
 
 	"github.com/gin-gonic/gin"
 )

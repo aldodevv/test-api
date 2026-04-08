@@ -3,10 +3,10 @@ package controllers
 import (
 	"net/http"
 
-	"test-api/index/advanced/config"
-	"test-api/index/advanced/constants"
-	"test-api/index/advanced/structs"
-	"test-api/index/advanced/utils"
+	"advanced/config"
+	"advanced/constants"
+	"advanced/structs"
+	"advanced/utils"
 
 	"github.com/gin-gonic/gin"
 )

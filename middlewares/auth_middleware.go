@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"os"
 
-	"test-api/index/advanced/constants"
-	"test-api/index/advanced/utils"
+	"advanced/constants"
+	"advanced/utils"
 
 	"github.com/gin-gonic/gin"
 )

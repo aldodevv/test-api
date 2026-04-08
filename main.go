@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 
-	"test-api/index/advanced/config"
-	"test-api/index/advanced/controllers"
-	"test-api/index/advanced/middlewares"
-	"test-api/index/advanced/structs"
+	"advanced/config"
+	"advanced/controllers"
+	"advanced/middlewares"
+	"advanced/structs"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
