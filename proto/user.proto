@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+option go_package = "advanced/proto";
+
+package user;
+
+service UserService {
+  rpc GetUser (UserRequest) returns (UserResponse) {}
+  rpc RegisterUser (RegisterRequest) returns (UserResponse) {}
+  rpc GetAllUsers (PaginationRequest) returns (UserListResponse) {}
+}
+
+message EmptyRequest {}
+
+message PaginationRequest {
+  int32 limit = 1;
+  int32 page = 2;
+}
+
+message RegisterRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message UserRequest {
+  int32 id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+// Data Satuan
+message UserData {
+  int32 id = 1;
+  string name = 2;
+  string email = 3;
+  string password = 4;
+}
+
+// FORMAT BASE RESPONSE MURNI
+message UserResponse {
+  string rc = 1;
+  string msg = 2;
+  UserData data = 3;
+}
+
+message PaginationData {
+  int32 limit = 1;
+  int32 page = 2;
+  repeated UserData data = 3;
+}
+
+message UserListResponse {
+  string rc = 1;
+  string msg = 2;
+  PaginationData data = 3;
+}

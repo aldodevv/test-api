@@ -2,56 +2,50 @@ package main
 
 import (
 	"log"
-	"os"
+	"net"
 
-	"advanced/config"
-	"advanced/controllers"
-	"advanced/middlewares"
-	"advanced/structs"
+	"advanced/app"
+	"advanced/proto"
 
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
-	// 1. Load file variabel '.env'
-	if err := godotenv.Load(); err != nil {
-		log.Println("Peringatan: File .env tidak ditemukan, menggunakan variabel OS default")
+	// 1. Eksekusi Dependency Injection Global (Config, DB, Logger, dll)
+	_, err := app.InjectAppConfig()
+	if err != nil {
+		log.Fatalf("Gagal memuat konfigurasi environment: %v", err)
 	}
 
-	// 2. Setup Koneksi Database (Konfigurasi URL ada di dalam ConnectDatabase)
-	config.ConnectDatabase()
-
-	// AutoMigrate: GORM akan otomatis membuat tabel di database 
-	// yang mensinkronisasi field-field pada Model User secara otomatis.
-	log.Println("Menjalankan Auto Migrasi Database...")
-	config.DB.AutoMigrate(&structs.User{})
-
-	// 3. Setup Framework Gin (Router)
-	r := gin.Default()
-
-	// 4. Setup Routes Config
-	// Menggunakan grouping route agak rapih dan bisa dikasih middleware di level group
-	api := r.Group("/api")
-	{
-		// Endpoint publik (Tidak butuh token)
-		api.POST("/users/register", controllers.CreateUser)
-
-		// Endpoint terproteksi (Butuh token)
-		// Kita sisipkan middlware "SimpleAuthMiddleware" sebelum mengeksekusi getAllUsers
-		secured := api.Group("/secured")
-		secured.Use(middlewares.SimpleAuthMiddleware())
-		{
-			secured.GET("/users", controllers.GetAllUsers)
-		}
+	// 2. Load Dependencies gRPC User
+	grpcHandler, err := app.InjectUserGRPC()
+	if err != nil {
+		log.Fatalf("Gagal meregistrasikan service user ke gRPC: %v", err)
 	}
 
-	// 5. Jalankan Server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	secMiddleware, err := app.InjectSecurityMiddleware()
+	if err != nil {
+		log.Fatalf("Gagal me-load middleware gRPC: %v", err)
 	}
-	
-	log.Printf("Server berjalan di port http://localhost:%s", port)
-	r.Run(":" + port)
+
+	// 3. Memulai gRPC Server (Memblokir Main Thread)
+	lis, err := net.Listen("tcp", ":9090")
+	if err != nil {
+		log.Fatalf("gRPC gagal bind ke tcp port: %v", err)
+	}
+
+	// Daftarkan interceptor security di server gRPC
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(secMiddleware.GRPCAuthInterceptor()),
+	)
+	proto.RegisterUserServiceServer(grpcServer, grpcHandler)
+
+	// Mendaftarkan Server Reflection untuk mempermudah Tester (seperti Postman)
+	reflection.Register(grpcServer)
+
+	log.Println("Server gRPC murni berjalan dan merajai port grpc://localhost:9090")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("Gagal menjalankan gRPC server: %v", err)
+	}
 }
